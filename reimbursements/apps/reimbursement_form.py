@@ -30,13 +30,13 @@ class ExpenseInline(ModelAdminWidget):
         "description"
     ]
 
-    LIST_HEADERS = ['Document number', 'Requisition number', 'Short description', 'Currency']
+    LIST_HEADERS = ['Document number', 'Requisition number', 'Short description', 'Amount']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._list.columns_align = ["left", "left", "right"]
-        self._list.columns_size = ["15%", "70%", "15%"]
+        self._list.columns_align = ["left", "center", "left", "right"]
+        self._list.columns_size = ["15%", "10%", "60%", "15%"]
 
 
 class RequestReimbursementForm(ModelFormWidget):

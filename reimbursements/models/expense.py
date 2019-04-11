@@ -15,7 +15,7 @@ class Expense(models.Model):
     requisition_number = models.IntegerField('Requisition number', blank=True, null=True)
     description = models.TextField("Description")
     value = MoneyField(
-        "Currency",
+        "Amount",
         max_digits=11,
         decimal_places=2,
         default_currency="EUR",
@@ -26,12 +26,12 @@ class Expense(models.Model):
     )
 
     def clean(self):
-        self.description = self.description.strip("\n")
 
-        # restrict number of lines
-        new_lines = len(self.description.split("\n"))
-        if new_lines > 8 or len(self.description) > 600:
-            raise ValidationError({"description": "Too much text."})
+        if self.description is not None:
+            # restrict number of lines
+            nlines = self.description.count("\n")
+            if nlines > 8 or len(self.description) > 600:
+                raise ValidationError({"description": "Too much text."})
 
     def short_description(self):
         return textwrap.shorten(self.description, width=100, placeholder="...")
