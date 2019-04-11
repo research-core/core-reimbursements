@@ -1,0 +1,207 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <style>
+    @page {
+        size: A4;
+        margin: 1cm 2cm 2.5cm 2cm;
+    }
+
+    body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 12px;
+        margin: 0;
+    }
+
+    section {
+        flex: 0 0 auto;
+        /*background-color: beige;*/
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    td {
+        vertical-align: top;
+    }
+
+    .page-title {
+        margin-top: -.5cm;
+        text-align: center;
+    }
+
+    #page {
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+
+    }
+
+    #section-break {
+        flex-basis: .8cm;
+    }
+
+    #requester {
+        border: 1px solid black;
+    }
+
+    #requester table {
+        border-collapse: separate;
+        border-spacing: 1rem;
+    }
+
+    #requester th {
+        width: 12rem;
+    }
+
+    #requester td {
+        border-bottom: 1px solid #aaa
+    }
+
+    #expenses {
+        flex: 1 0 auto;
+        border: 1px solid black;
+    }
+
+    #expenses .doc-number {
+        width: 10%;
+    }
+
+    #expenses .req-number {
+        width: 15%;
+    }
+
+    #expenses .description {
+        width: 55%;
+    }
+
+    #expenses .money {
+        width: 20%;
+        text-align: right;
+    }
+
+    #expenses td {
+        padding: 1rem;
+    }
+
+    #expenses th {
+        text-align: center;
+        border-bottom: 1px solid black;
+    }
+
+    #expenses td+td {
+        /*border-left: 1px solid black;*/
+    }
+
+    #expenses-summary {
+        display: flex;
+        justify-content: space-between;
+        border: 1px solid black;
+        border-top: 0;
+    }
+
+    #expenses-summary div {
+        padding: .5rem 1rem;
+    }
+
+    #date {
+        text-align: right;
+    }
+
+    #signatures {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    #signatures>span {
+        width: 10rem;
+        text-align: center;
+        padding-bottom: 1.5cm;
+        border-bottom: 1px solid #aaa;
+    }
+    </style>
+</head>
+
+<body>
+    <div id="page">
+        <section id="header">
+            <img class="logo" src="/static/logo_pt.png">
+            <div class="page-title">
+                <h2>REEMBOLSO DE DESPESAS</h2>
+                <h2>REIMBURSEMENT</h2>
+            </div>
+        </section>
+        <div id="section-break"></div>
+        <section id="requester">
+            <table>
+                <col>
+                <tr>
+                    <th>Nome / Name</th>
+                    <td>{{ reimbursement.requester_name }}</td>
+                </tr>
+                <tr>
+                    <th>CR / Responsability Center</th>
+                    <td>{{ reimbursement.project.costcenter.costcenter_code }}</td>
+                </tr>
+                <tr>
+                    <th>Projecto / Project</th>
+                    <td>{{ reimbursement.project.financeproject_code }}</td>
+                </tr>
+            </table>
+        </section>
+        <div id="section-break"></div>
+        <section id="expenses">
+            <table>
+                <col class="doc-number">
+                <col class="req-number">
+                <col class="description">
+                <col class="money">
+                <thead>
+                    <tr>
+                        <th>Nº DOC / DOC Nr</th>
+                        <th>REQUISIÇÃO / REQUISITION</th>
+                        <th>DESCRIÇÃO / DESCRIPTION</th>
+                        <th>VALOR / VALUE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in reimbursement.expenses.all %}
+                    <tr>
+                        <td></td>
+                        <td>{{ expense.requisition_number|default_if_none:"" }}</td>
+                        <td>{{ expense.description|linebreaksbr }}</td>
+                        <td class="money">{{ expense.value }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+        <section id="expenses-summary">
+            <div>
+                <strong>IBAN:</strong> {{ reimbursement.requester_iban }}
+            </div>
+            <div {% if not reimbursement.total %} style="min-width: 8rem;" {% endif %}>
+                <strong>TOTAL:</strong> {{ reimbursement.total|default_if_none:"" }}
+            </div>
+        </section>
+        <div id="section-break"></div>
+        <section id="date">
+            Received: ____ / ____ / ____
+        </section>
+        <div id="section-break"></div>
+        <section id="signatures">
+            <span>Principal Investigator</span>
+            <span>Director of Research Support</span>
+            <span>Collaborator</span>
+        </section>
+    </div>
+</body>
+
+</html>
