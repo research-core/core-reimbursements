@@ -23,7 +23,7 @@ class ReimbursementAdmin(admin.ModelAdmin):
 
     autocomplete_fields = ["project"]
 
-    fields = ["person", "ext_person_name", "ext_person_iban", "project"]
+    fields = ["person", "ext_person_name", "iban", "project"]
 
     readonly_fields = ["status_changed"]
 

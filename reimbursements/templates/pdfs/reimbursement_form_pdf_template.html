@@ -41,6 +41,8 @@
         height: 100vh;
         display: flex;
         flex-direction: column;
+        max-width: 800px;
+        margin: auto auto;
 
     }
 
@@ -129,7 +131,7 @@
     </style>
 </head>
 
-<body>
+<body onload="print();" >
     <div id="page">
         <section id="header">
             <img class="logo" src="/static/logo_pt.png">
@@ -174,7 +176,7 @@
                 <tbody>
                     {% for expense in reimbursement.expenses.all %}
                     <tr>
-                        <td></td>
+                        <td>{{ expense.document_number|default_if_none:"" }}</td>
                         <td>{{ expense.requisition_number|default_if_none:"" }}</td>
                         <td>{{ expense.description|linebreaksbr }}</td>
                         <td class="money">{{ expense.value }}</td>
