@@ -38,7 +38,8 @@ class ReimbursementQuerySet(models.QuerySet):
         if default is None:
             default = self.none()
 
-        if user.is_superuser: return self
+        if user.is_superuser:
+            return self
 
         ranked_permissions = Permissions.objects.filter_by_auth_permissions(
             user, self.model, required_codenames)
@@ -51,68 +52,21 @@ class ReimbursementQuerySet(models.QuerySet):
 
                 # check which groups the user has to its people
                 groups_withaccess = [p.researchgroup for p in ranked_permissions]
-                rankings = [(p.researchgroup, p.ranking) for p in ranked_permissions]
-
-                rankfilters = Q()
-                for researchgroup, ranking in rankings:
-                    rankfilters.add(Q(researchgroup=researchgroup, ranking__gte=ranking), Q.OR)
-                rankperms = Permissions.objects.filter(rankfilters)
-
-                persons = Person.objects.filter(group__in=groups_withaccess)
-                persons = persons.exclude(
-                    ~Q(djangouser=user) &
-                    Q(djangouser__groups__rankedpermissions__in=rankperms)
-                ).distinct()
-
-
-                filters = Q()
-
-                # Show the contracts from the user
-                filters.add(Q(person__djangouser=user), Q.OR)
-
-                # Show the contracts the user is supervisor
-                filters.add(Q(supervisor__djangouser=user), Q.OR)
-
-                # Show the people from groups with visibility
-                filters.add(Q(
-                    person__groupmember__date_joined__lte=F('contract_start'),
-                    person__groupmember__date_left__gte=F('contract_end'),
-                    person__groupmember__group__in=groups_withaccess,
-                    person__in=persons
-                ), Q.OR)
-                filters.add(Q(
-                    person__groupmember__date_joined__lte=F('contract_start'),
-                    person__groupmember__date_left__isnull=True,
-                    person__groupmember__group__in=groups_withaccess,
-                    person__in=persons
-                ), Q.OR)
-                filters.add(Q(
-                    person__groupmember__date_joined__isnull=True,
-                    person__groupmember__date_left__isnull=True,
-                    person__groupmember__group__in=groups_withaccess,
-                    person__in=persons
-                ), Q.OR)
-
-                return self.filter(filters).distinct()
+                return self.filter(person__group_set=groups_withaccess)
 
         return default.distinct()
 
     # PyForms Querysets
-    # =========================================================================
-    """
+
     def list_permissions(self, user):
         return self.managed_by(
             user,
-            ['view', 'change'],
+            ['can_approve_reimbursements'],
             default=self.owned_by(user)
         )
 
     def has_add_permissions(self, user):
-        return Permissions.objects.filter_by_auth_permissions(
-            user=user,
-            model=self.model,
-            codenames=['add'],
-        ).exists()
+        return True
 
     def has_view_permissions(self, user):
         # view_permission is useless because we let people see
@@ -120,12 +74,10 @@ class ReimbursementQuerySet(models.QuerySet):
         return self.list_permissions(user)
 
     def has_update_permissions(self, user):
-        res = self.managed_by(user, ['change'])
+        return self.filter(status="pending").filter(created_by=user).exists()
 
-        return False if res is None else res.exists()
 
     def has_remove_permissions(self, user):
-        res = self.managed_by(user, ['delete'])
+        return self.filter(status="pending").filter(created_by=user).exists()
 
-        return False if res is None else res.exists()
-    """
+    # =========================================================================
