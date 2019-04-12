@@ -74,10 +74,28 @@ class ReimbursementQuerySet(models.QuerySet):
         return self.list_permissions(user)
 
     def has_update_permissions(self, user):
-        return self.filter(status="pending").filter(created_by=user).exists()
+        default = self.filter(
+            Q(status="pending") &
+            (
+                    Q(created_by=user) |
+                    Q(person__djangouser=user)
+            )
+        )
+
+        return self.managed_by(
+            user,
+            ['can_approve_reimbursements'],
+            default=default
+        ).exists()
 
 
     def has_remove_permissions(self, user):
-        return self.filter(status="pending").filter(created_by=user).exists()
+        return self.filter(
+            Q(status="pending") &
+            (
+                    Q(created_by=user) |
+                    Q(person__djangouser=user)
+            )
+        )
 
     # =========================================================================

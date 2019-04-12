@@ -130,11 +130,3 @@ class RequestReimbursementForm(ModelFormWidget):
         else:
             return super().title
 
-
-    def has_remove_permissions(self):
-        obj = self.model_object
-        if obj:
-            user = PyFormsMiddleware.user()
-            return obj.status == "pending" and obj.created_by == user
-        else:
-            return False
