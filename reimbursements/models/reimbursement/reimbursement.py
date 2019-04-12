@@ -37,11 +37,9 @@ class Reimbursement(StatusModel, TimeStampedModel):
     def __str__(self):
         return f"Reimbursement for {self.requester_name}"
 
-
-    def save(self):
+    def clean(self):
         if self.created_by is None:
             raise ValidationError("This proposal has no person responsible")
-        super().save()
 
     # Custom methods
     # =========================================================================
