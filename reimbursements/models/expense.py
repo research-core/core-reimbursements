@@ -26,6 +26,11 @@ class Expense(models.Model):
     )
 
     def clean(self):
+        if self.reimbursement.status != '0':
+            raise ValidationError({
+                "reimbursement": "The reimbursement is closed for edition. "
+                                 "Change the status for pending if you would like to modify the expense."
+            })
 
         if self.description is not None:
             # restrict number of lines

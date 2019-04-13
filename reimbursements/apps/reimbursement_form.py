@@ -38,6 +38,23 @@ class ExpenseInline(ModelAdminWidget):
         self._list.columns_align = ["left", "center", "left", "right"]
         self._list.columns_size = ["15%", "10%", "60%", "15%"]
 
+    def has_update_permissions(self, obj):
+        if obj is None:
+            return True
+        else:
+            return obj.reimbursement.status=='0'
+
+    def has_remove_permissions(self, obj):
+        if obj is None:
+            return True
+        else:
+            return obj.reimbursement.status == '0'
+
+
+    def has_add_permissions(self):
+        obj = self.parent_model.objects.get(pk=self.parent_pk)
+        return obj.status == '0'
+
 
 class RequestReimbursementForm(ModelFormWidget):
     """

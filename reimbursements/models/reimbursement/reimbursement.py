@@ -12,17 +12,17 @@ from .reimbursement_queryset import ReimbursementQuerySet
 class Reimbursement(StatusModel, TimeStampedModel):
 
     STATUS = Choices(
-        ("pending", "Pending"),
-        ("printed", "Printed"),
-        ("submitted", "Submitted"),
-        ("approved", "Approved"),
-        ("rejected", "Rejected"),
+        ("0", "Pending"),
+        ("P", "Printed"),
+        ("S", "Submitted"),
+        ("A", "Approved"),
+        ("R", "Rejected"),
     )
 
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    person = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE, blank=True, null=True)
-    project = models.ForeignKey(to="supplier.FinanceProject", on_delete=models.CASCADE, blank=True, null=True)
-    iban = IBANField(verbose_name="IBAN", blank=True, include_countries=("PT",))
+    person     = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE, blank=True, null=True)
+    project    = models.ForeignKey(to="supplier.FinanceProject", on_delete=models.CASCADE, blank=True, null=True)
+    iban       = IBANField(verbose_name="IBAN", blank=True, include_countries=("PT",))
 
     objects = ReimbursementQuerySet.as_manager()
 
@@ -83,11 +83,11 @@ class Reimbursement(StatusModel, TimeStampedModel):
 
     def status_icon(self):
         d = {
-            "pending": '<i class="grey clock icon"></i>',
-            "printed": '<i class="blue print icon"></i>',
-            "submitted": '<i class="black lock icon"></i>',
-            "approved": '<i class="green thumbs up icon"></i>',
-            "rejected": '<i class="red thumbs down icon"></i>',
+            "0": '<i class="grey clock icon"></i>',
+            "P": '<i class="blue print icon"></i>',
+            "S": '<i class="black lock icon"></i>',
+            "A": '<i class="green thumbs up icon"></i>',
+            "R": '<i class="red thumbs down icon"></i>',
         }
 
         icon = d.get(self.status, "")

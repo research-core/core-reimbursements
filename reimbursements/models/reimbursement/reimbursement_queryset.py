@@ -75,7 +75,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
     def has_update_permissions(self, user):
         default = self.filter(
-            Q(status="pending") &
+            Q(status="0") &
             (
                     Q(created_by=user) |
                     Q(person__djangouser=user)
@@ -91,7 +91,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
     def has_remove_permissions(self, user):
         return self.filter(
-            Q(status="pending") &
+            Q(status="0") &
             (
                     Q(created_by=user) |
                     Q(person__djangouser=user)

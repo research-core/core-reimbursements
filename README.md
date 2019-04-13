@@ -1,29 +1,15 @@
-# README #
+# CORE reimbursements module #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+The module adds forms to submit reimbursements requests to the finance department.
 
-### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+![Menu](docs/images/menu.png)
 
-### How do I get set up? ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+![Menu](docs/images/list.png)
 
-### Contribution guidelines ###
 
-* Writing tests
-* Code review
-* Other guidelines
+![Menu](docs/images/edit-form.png)
 
-### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+![Menu](docs/images/print.png)

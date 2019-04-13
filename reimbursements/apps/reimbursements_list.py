@@ -1,6 +1,7 @@
 from pyforms_web.widgets.django import ModelAdminWidget
 from .reimbursement_form import RequestReimbursementForm
 from pyforms_web.web.middleware import PyFormsMiddleware
+from pyforms.controls import ControlCheckBox
 from ..models import Reimbursement
 from confapp import conf
 
@@ -36,6 +37,14 @@ class ReimbursementsApp(ModelAdminWidget):
 
     def __init__(self, *args, **kwargs):
         self.user = PyFormsMiddleware.user()
+
+        self._showopen = ControlCheckBox(
+            'Show only open',
+            default=True,
+            label_visible=False,
+            changed_event=self.__show_open_reimbursements_evt
+        )
+
         super().__init__(*args, **kwargs)
 
         self._list.columns_size = ["60%", "10%", "10%", "10%", "10%"]
@@ -44,3 +53,16 @@ class ReimbursementsApp(ModelAdminWidget):
         self._list.columns_align[-2] = "right"
         self._list.columns_align[-1] = "center"
 
+
+    def __show_open_reimbursements_evt(self):
+        self.populate_list()
+
+    def get_queryset(self, request, queryset):
+        if self._showopen.value:
+            return queryset.exclude(status='A').exclude(status='R')
+        else:
+            return queryset
+
+    def get_toolbar_buttons(self, has_add_permission=False):
+        toolbar = super().get_toolbar_buttons(has_add_permission)
+        return ('_add_btn', '_showopen')
