@@ -102,6 +102,7 @@ class Reimbursement(StatusModel, TimeStampedModel):
 
         context = {
             "reimbursement": self,
+            "logo": settings.REIMBURSEMENTS_LOGO,
             # # FIXME test only
             # 'motive': 'New Hire',
             # 'proposal_date': self.contractproposal_createdon.strftime('%b %d, %Y'),
