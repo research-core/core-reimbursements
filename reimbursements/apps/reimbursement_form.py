@@ -1,59 +1,74 @@
 # from django.conf import settings
 # from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.urls import reverse
-
 from confapp import conf
-
-from pyforms.basewidget import segment, no_columns
-
+from django.urls import reverse
 from pyforms.controls import ControlButton
-
+from ..models import Reimbursement, Expense
+from pyforms.basewidget import segment, no_columns
 from pyforms_web.web.middleware import PyFormsMiddleware
 from pyforms_web.widgets.django import ModelAdminWidget
 from pyforms_web.widgets.django import ModelFormWidget
+from pyforms.controls import ControlAutoComplete
+from supplier.models import FinanceCostCenter, FinanceProject, ExpenseCode
 
-from ..models import Reimbursement, Expense
+class ExpenseForm(ModelFormWidget):
 
+    MODEL = Expense
+    FIELDSETS = [
+        ('document_number', "value", "value_currency", "requisition_number"),
+        ('_costcenter', '_financeprj', 'expensecode'),
+        'receipt',
+        'description'
+    ]
+
+    def create_model_formfields(self):
+        super().create_model_formfields()
+
+        obj = self.model_object
+
+        self._costcenter = ControlAutoComplete(
+            'Cost center',
+            queryset=FinanceCostCenter.objects.all(),
+            changed_event=self.load_finance_projects,
+            default=obj.expensecode.financeproject.costcenter.pk
+        )
+        self._financeprj = ControlAutoComplete(
+            'Finance project',
+            queryset=FinanceProject.objects.all(),
+            enabled=False,
+            changed_event=self.load_expense_codes,
+            default=obj.expensecode.financeproject.pk
+        )
+
+        self.load_expense_codes()
+
+
+    def load_finance_projects(self):
+        self._financeprj.queryset = FinanceProject.objects.filter(costcenter=self._costcenter.value)
+        self._financeprj.value = None
+        self.expensecode.enabled = False
+
+    def load_expense_codes(self):
+        self.expensecode.queryset = ExpenseCode.objects.filter(financeproject=self._financeprj.value)
+        self.expensecode.value = None
+        self.expensecode.enabled = True
 
 
 
 class ExpenseInline(ModelAdminWidget):
     MODEL = Expense
-
     CLOSE_ON_REMOVE = True
 
-    LIST_DISPLAY = ['document_number',"requisition_number", "short_description", "value"]
+    EDITFORM_CLASS = ExpenseForm
 
-    FIELDSETS = [
-        ('document_number', "value", "value_currency", "requisition_number"),
-        "description"
-    ]
-
-    LIST_HEADERS = ['Document number', 'Requisition number', 'Short description', 'Amount']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._list.columns_align = ["left", "center", "left", "right"]
-        self._list.columns_size = ["15%", "10%", "60%", "15%"]
-
-    def has_update_permissions(self, obj):
-        if obj is None:
-            return True
-        else:
-            return obj.reimbursement.status=='0'
-
-    def has_remove_permissions(self, obj):
-        if obj is None:
-            return True
-        else:
-            return obj.reimbursement.status == '0'
+    LIST_DISPLAY = ['document_number',"requisition_number", 'expensecode', "short_description", "value"]
+    LIST_HEADERS = ['Document number', 'Requisition number', 'Expense code','Short description', 'Amount']
+    LIST_COLS_ALIGN = ["left", "center", "center", "left", "right"]
+    LIST_COLS_SIZES = ["5%", "10%", '30%', "40%", "15%"]
 
 
-    def has_add_permissions(self):
-        obj = self.parent_model.objects.get(pk=self.parent_pk)
-        return obj.status == '0'
+
+
 
 
 class RequestReimbursementForm(ModelFormWidget):
@@ -103,8 +118,7 @@ class RequestReimbursementForm(ModelFormWidget):
             no_columns("_print", style="float:right"),
             "h3:Requester Information",
             segment(
-                ("person", "iban"),
-                "project"
+                ("person", "iban")
             )
         ]
 

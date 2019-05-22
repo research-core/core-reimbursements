@@ -1,36 +1,29 @@
-# CORE reimbursements module #
+# README #
 
-The module adds forms to submit reimbursements requests to the finance department.
+This README would normally document whatever steps are necessary to get your application up and running.
 
+### What is this repository for? ###
 
-## Installation & configuration
+* Quick summary
+* Version
+* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
-```python
-pip install core-reimbursements
-python manage.py migrate
-```
+### How do I get set up? ###
 
-To configure the logo in the print document and the next configuration to the settings.py file.
+* Summary of set up
+* Configuration
+* Dependencies
+* Database configuration
+* How to run tests
+* Deployment instructions
 
-```python
-REIMBURSEMENTS_LOGO = '...'
-```
+### Contribution guidelines ###
 
+* Writing tests
+* Code review
+* Other guidelines
 
-## The applications
+### Who do I talk to? ###
 
-The module adds the reimbursements option to the left menu.
-
-![Menu](docs/images/menu.png)
-
-Shows the list of reimbursements submitted by the users.
-
-![Menu](docs/images/list.png)
-
-Edit form.
-
-![Menu](docs/images/edit-form.png)
-
-Print version of the reimbursement.
-
-![Menu](docs/images/print.png)
+* Repo owner or admin
+* Other community or team contact

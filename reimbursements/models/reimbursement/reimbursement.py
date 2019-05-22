@@ -12,17 +12,16 @@ from .reimbursement_queryset import ReimbursementQuerySet
 class Reimbursement(StatusModel, TimeStampedModel):
 
     STATUS = Choices(
-        ("0", "Pending"),
-        ("P", "Printed"),
-        ("S", "Submitted"),
-        ("A", "Approved"),
-        ("R", "Rejected"),
+        ("pending", "Pending"),
+        ("printed", "Printed"),
+        ("submitted", "Submitted"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
     )
 
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    person     = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE, blank=True, null=True)
-    project    = models.ForeignKey(to="supplier.FinanceProject", on_delete=models.CASCADE, blank=True, null=True)
-    iban       = IBANField(verbose_name="IBAN", blank=True, include_countries=("PT",))
+    person = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE, blank=True, null=True)
+    iban = IBANField(verbose_name="IBAN", blank=True, include_countries=("PT",))
 
     objects = ReimbursementQuerySet.as_manager()
 
@@ -46,7 +45,7 @@ class Reimbursement(StatusModel, TimeStampedModel):
 
     @property
     def requester_name(self):
-        return self.person.full_name
+        return self.person.full_name if self.person else 'Undefined person'
 
     @property
     def requester_iban(self):
@@ -59,14 +58,6 @@ class Reimbursement(StatusModel, TimeStampedModel):
         except TypeError:
             # can not add Money with different currencies
             return None
-
-    def get_project_code(self):
-        if self.project:
-            return self.project.financeproject_code
-        else:
-            return ""
-
-    get_project_code.short_description = "project"
 
     def get_requisitions_status(self):
         total_expenses = self.expenses.count()
@@ -83,11 +74,11 @@ class Reimbursement(StatusModel, TimeStampedModel):
 
     def status_icon(self):
         d = {
-            "0": '<i class="grey clock icon"></i>',
-            "P": '<i class="blue print icon"></i>',
-            "S": '<i class="black lock icon"></i>',
-            "A": '<i class="green thumbs up icon"></i>',
-            "R": '<i class="red thumbs down icon"></i>',
+            "pending": '<i class="grey clock icon"></i>',
+            "printed": '<i class="blue print icon"></i>',
+            "submitted": '<i class="black lock icon"></i>',
+            "approved": '<i class="green thumbs up icon"></i>',
+            "rejected": '<i class="red thumbs down icon"></i>',
         }
 
         icon = d.get(self.status, "")
@@ -98,11 +89,10 @@ class Reimbursement(StatusModel, TimeStampedModel):
     def generate_pdf_view(self, request=None):
         """Returns a PDF view for this proposal."""
 
-        template = "pdfs/reimbursement_form_pdf_template.html"
+        template = "reimbursements/reimbursement_print.html"
 
         context = {
             "reimbursement": self,
-            "logo": settings.REIMBURSEMENTS_LOGO,
             # # FIXME test only
             # 'motive': 'New Hire',
             # 'proposal_date': self.contractproposal_createdon.strftime('%b %d, %Y'),

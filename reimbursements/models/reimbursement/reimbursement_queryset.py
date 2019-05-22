@@ -41,7 +41,7 @@ class ReimbursementQuerySet(models.QuerySet):
         if user.is_superuser:
             return self
 
-        ranked_permissions = Permissions.objects.filter_by_auth_permissions(
+        ranked_permissions = Permissions.objects.filter_by_user_and_auth_permissions(
             user, self.model, required_codenames)
 
         if ranked_permissions.exists():
@@ -75,7 +75,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
     def has_update_permissions(self, user):
         default = self.filter(
-            Q(status="0") &
+            Q(status="pending") &
             (
                     Q(created_by=user) |
                     Q(person__djangouser=user)
@@ -91,7 +91,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
     def has_remove_permissions(self, user):
         return self.filter(
-            Q(status="0") &
+            Q(status="pending") &
             (
                     Q(created_by=user) |
                     Q(person__djangouser=user)
