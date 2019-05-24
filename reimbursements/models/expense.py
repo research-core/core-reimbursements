@@ -24,10 +24,22 @@ class Expense(models.Model):
                             default_currency="EUR",
                             validators=[MinMoneyValidator(Money(0.01))],
                          )
-    receipt            = models.FileField('Receipt', upload_to=user_directory_path)
-    reimbursement      = models.ForeignKey(to="Reimbursement", on_delete=models.CASCADE, related_name="expenses")
-    expensecode        = models.ForeignKey(to='supplier.ExpenseCode', on_delete=models.CASCADE, related_name="reimbursement_expenses",
+    eur_value          = models.DecimalField(
+                            'Amount in EUR',
+                            max_digits=11,
+                            decimal_places=2
+                         )
+
+    is_social     = models.BooleanField('It is a social expense', default=False)
+    receipt       = models.FileField('Receipt', upload_to=user_directory_path)
+    receipt_date  = models.DateField('Receipt date', null=True, default=None)
+    reimbursement = models.ForeignKey(to="Reimbursement", on_delete=models.CASCADE, related_name="expenses")
+    expensecode   = models.ForeignKey(to='supplier.ExpenseCode', on_delete=models.CASCADE, related_name="reimbursement_expenses",
                                            verbose_name='Expense code')
+
+
+    class Meta:
+        ordering = ('document_number',)
 
     def clean(self):
 

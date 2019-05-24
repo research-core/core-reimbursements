@@ -1,13 +1,8 @@
-from dateutil.relativedelta import relativedelta
-
-from django.conf import settings
 from django.db import models
-from django.db.models import Q, F
-from django.utils import timezone
-
-
+from django.db.models import Q
 from common.models import Permissions
-
+from research.models import Group as ResearchGroup
+from supplier.models import ExpenseCode
 
 class ReimbursementQuerySet(models.QuerySet):
     pass
@@ -49,10 +44,19 @@ class ReimbursementQuerySet(models.QuerySet):
             if ranked_permissions.filter(researchgroup=None).exists():
                 return self
             else:
+                # check which expense codes the user has permissions to
+                researchgroups = [p.researchgroup for p in ranked_permissions]
+                djangogroups   = [g.groupdjango for g in researchgroups]
+                expenses_with_access = ExpenseCode.objects.filter(
+                    financeproject__costcenter__group__in=djangogroups
+                )
 
-                # check which groups the user has to its people
-                groups_withaccess = [p.researchgroup for p in ranked_permissions]
-                return self.filter(person__group_set=groups_withaccess)
+                # The owner of the reimbursements or the manager of the expense codes can access
+                return self.filter(
+                    Q(expenses__expensecode__in=expenses_with_access) |
+                    Q(created_by=user) |
+                    Q(person__djangouser=user)
+                )
 
         return default.distinct()
 
@@ -75,7 +79,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
     def has_update_permissions(self, user):
         default = self.filter(
-            Q(status="pending") &
+            Q(status="draft") &
             (
                     Q(created_by=user) |
                     Q(person__djangouser=user)
@@ -91,11 +95,14 @@ class ReimbursementQuerySet(models.QuerySet):
 
     def has_remove_permissions(self, user):
         return self.filter(
-            Q(status="pending") &
+            Q(status__in=["draft","pending"]) &
             (
                     Q(created_by=user) |
                     Q(person__djangouser=user)
             )
         )
+
+
+
 
     # =========================================================================
