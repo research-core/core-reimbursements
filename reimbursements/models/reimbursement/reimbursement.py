@@ -14,12 +14,13 @@ from notifications.tools import notify
 class Reimbursement(StatusModel, TimeStampedModel):
 
     STATUS = Choices(
-        ("draft",       "Draft"),
-        ("pending",     "Pending"),
-        ("printed",     "Printed"),
-        ("submitted",   "Submitted"),
-        ("approved",    "Approved"),
-        ("rejected",    "Rejected"),
+        ("draft",     "Draft"),
+        ("pending",   "Pending"),
+        ("printed",   "Printed"),
+        ("submitted", "Submitted"),
+        ("approved",  "Approved"),
+        ("rejected",  "Rejected"),
+        ("closed",    "Closed"),
     )
 
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
