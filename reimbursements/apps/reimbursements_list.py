@@ -18,7 +18,7 @@ class ReimbursementsApp(ModelAdminWidget):
     USE_DETAILS_TO_EDIT = False
 
     LIST_DISPLAY = [
-        "requester_name",
+        "created_by",
         "get_requisitions_status",
         "total",
         "status",
