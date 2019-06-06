@@ -51,10 +51,6 @@ class ExpenseForm(CustomModelForm):
         user  = PyFormsMiddleware.user()
         person = user.person_user.first()
 
-        if person is None:
-            self.warning('Sorry you require a person associated to your user.')
-            return
-
         self._costcenter = ControlAutoComplete(
             'Cost center',
             queryset=FinanceCostCenter.objects.active().by_person(person),
@@ -71,6 +67,12 @@ class ExpenseForm(CustomModelForm):
 
         if obj and obj.expensecode:
             self.load_expense_codes()
+
+        if person is None:
+            self.warning('Sorry you require a person associated to your user.')
+            return
+
+
 
     def load_finance_projects(self):
         self._financeprj.queryset = FinanceProject.objects.filter(costcenter=self._costcenter.value)

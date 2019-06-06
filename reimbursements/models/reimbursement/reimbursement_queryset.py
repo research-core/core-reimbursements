@@ -16,11 +16,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
         This is by default what everyone sees if they have no permissions.
         """
-        return self.filter(
-            Q(person__djangouser=user)
-            |
-            Q(created_by=user)
-        ).distinct()
+        return self.filter( Q(created_by=user) | Q(person__djangouser=user) ).distinct()
 
     def managed_by(self, user, required_codenames, default=None):
         """
@@ -29,7 +25,6 @@ class ReimbursementQuerySet(models.QuerySet):
 
         Uses the RankedPermissions table.
         """
-
         if default is None:
             default = self.none()
 
@@ -40,7 +35,7 @@ class ReimbursementQuerySet(models.QuerySet):
             user, self.model, required_codenames)
 
         if ranked_permissions.exists():
-            # check if the user has permissions to all people
+            # check if the user has permissions to all registers
             if ranked_permissions.filter(researchgroup=None).exists():
                 return self
             else:
@@ -60,12 +55,15 @@ class ReimbursementQuerySet(models.QuerySet):
 
         return default.distinct()
 
+
+
     # PyForms Querysets
 
     def list_permissions(self, user):
+
         return self.managed_by(
             user,
-            ['can_approve_reimbursements'],
+            ['can_approve_reimbursements', 'manage_reimbursements', 'receive_approved_notifications'],
             default=self.owned_by(user)
         )
 
@@ -78,28 +76,32 @@ class ReimbursementQuerySet(models.QuerySet):
         return self.list_permissions(user)
 
     def has_update_permissions(self, user):
-        default = self.filter(
-            Q(status="draft") &
-            (
-                    Q(created_by=user) |
-                    Q(person__djangouser=user)
-            )
-        )
 
-        return self.managed_by(
-            user,
-            ['can_approve_reimbursements'],
-            default=default
-        ).exists()
+        # it was created or belongs to the user.
+        if self.filter(
+                Q(status="draft") &
+                (
+                    Q(created_by=user) | Q(person__djangouser=user)
+                )
+            ).exists():
+            return True
 
+        if self.filter(
+                status__in=['draft', 'pending', 'printed', 'approved', 'rejected']
+            ).managed_by( user, ['manage_reimbursements'] ).exists():
+            return True
+
+        if self.filter( status__in=['submitted'] ).managed_by( user, ['can_approve_reimbursements'] ).exists():
+            return True
+
+        return False
 
     def has_remove_permissions(self, user):
+        """
+        Only reimbursements in draft or pending can be removed.
+        """
         return self.filter(
-            Q(status__in=["draft","pending"]) &
-            (
-                    Q(created_by=user) |
-                    Q(person__djangouser=user)
-            )
+            Q(status__in=["draft", "pending"]) & ( Q(created_by=user) | Q(person__djangouser=user) )
         )
 
 

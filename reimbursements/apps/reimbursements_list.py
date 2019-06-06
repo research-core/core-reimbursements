@@ -21,14 +21,14 @@ class ReimbursementsApp(ModelAdminWidget):
         "requester_name",
         "get_requisitions_status",
         "total",
-        "status_icon",
+        "status",
     ]
     LIST_FILTER = ["created", "status"]
     SEARCH_FIELDS = ["person__full_name__icontains", "ext_person_name__icontains"]
 
     # Orquestra ===============================================================
     LAYOUT_POSITION = conf.ORQUESTRA_HOME
-    ORQUESTRA_MENU = "left"
+    ORQUESTRA_MENU = "top"
     ORQUESTRA_MENU_ICON = "file alternate outline"
     ORQUESTRA_MENU_ORDER = 800
     # =========================================================================

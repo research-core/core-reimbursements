@@ -28,7 +28,7 @@ class RequestReimbursementForm(ModelFormWidget):
     INLINES = [ExpenseInline]
 
     FIELDSETS = [
-        no_columns('_previous', '_submit', "_print", '_printed', '_submit2approve','_reject', '_accept', style="float:right"),
+        no_columns('_previous', '_submit', "_print", '_printed', '_submit2approve','_reject', '_accept', 'bank_transfer_date', '_close', style="float:right"),
         "h3:Requester Information",
         segment(
             ("person", "iban")
@@ -47,6 +47,7 @@ class RequestReimbursementForm(ModelFormWidget):
         self._previous = ControlButton(
             '<i class="ui icon paper plane outline"></i>Previous status',
             css="basic gray",
+            visible = False,
             label_visible=False,
             default = self.__previous_status_evt
         )
@@ -54,18 +55,21 @@ class RequestReimbursementForm(ModelFormWidget):
         self._submit = ControlButton(
             '<i class="ui icon paper plane outline"></i>Submit',
             css="blue",
+            visible=False,
             label_visible=False,
             default = self.__submit_2_pending_evt
         )
 
         self._print = ControlButton(
             '<i class="ui icon print"></i>Print',
+            visible=False,
             css="basic blue",
             label_visible=False
         )
 
         self._printed = ControlButton(
             '<i class="ui icon paper plane outline"></i>Set printed',
+            visible=False,
             css="blue",
             label_visible=False,
             default=self.__set_printed_evt
@@ -73,23 +77,33 @@ class RequestReimbursementForm(ModelFormWidget):
 
         self._submit2approve = ControlButton(
             '<i class="ui icon paper plane outline"></i>Submit to approval',
+            visible=False,
             css="blue",
             label_visible=False,
             default=self.__submit_2_approve_evt
         )
 
         self._accept = ControlButton(
-            '<i class="ui icon accept"></i>Accept',
+            '<i class="ui icon thumbs up"></i>Accept',
+            visible=False,
             css="green",
             label_visible=False,
             default = self.__accept_evt
         )
 
         self._reject = ControlButton(
-            '<i class="ui icon reject"></i>Reject',
+            '<i class="ui icon thumbs down"></i>Reject',
+            visible=False,
             css="red",
             label_visible=False,
             default=self.__reject_evt
+        )
+
+        self._close = ControlButton(
+            '<i class="ui icon thumbs up"></i>It was paid',
+            visible=False,
+            css="green basic",
+            default=self.__set_closed_evt
         )
 
         super().__init__(*args, **kwargs)
@@ -97,12 +111,17 @@ class RequestReimbursementForm(ModelFormWidget):
         self.person.enabled = False
 
         if self.model_object is None:
+
             user   = PyFormsMiddleware.user()
             person = user.person_user.first()
-            self.person.value = person.pk
-            self.iban.value   = person.privateinfo.iban
 
-
+            if person is not None:
+                self.person.value = person.pk
+                self.iban.value = person.privateinfo.iban
+            else:
+                self.warning(
+                    'You need a Person profile associated to your account to be able to create reimbursements.'
+                )
 
         self.update_fields_visibility()
 
@@ -126,17 +145,24 @@ class RequestReimbursementForm(ModelFormWidget):
         if obj is None:
             self._print.hide()
 
-        if obj:
-            if obj.status=='draft':
-                self._previous.hide()
+        if obj and self.has_update_permissions():
+
+            if obj.status == 'draft':
+
+                self.bank_transfer_date.hide()
                 self._submit.show()
+                self._previous.hide()
                 self._print.hide()
                 self._printed.hide()
                 self._submit2approve.hide()
                 self._accept.hide()
                 self._reject.hide()
+                self._close.hide()
                 self.iban.enabled = True
-            elif obj.status=='pending':
+
+            elif obj.status == 'pending':
+
+                self.bank_transfer_date.hide()
                 self._previous.show()
                 self._submit.hide()
                 self._print.show()
@@ -144,8 +170,12 @@ class RequestReimbursementForm(ModelFormWidget):
                 self._submit2approve.hide()
                 self._accept.hide()
                 self._reject.hide()
+                self._close.hide()
                 self.iban.enabled = False
-            elif obj.status=='printed':
+
+            elif obj.status == 'printed':
+
+                self.bank_transfer_date.hide()
                 self._previous.show()
                 self._submit.hide()
                 self._print.hide()
@@ -153,9 +183,12 @@ class RequestReimbursementForm(ModelFormWidget):
                 self._submit2approve.show()
                 self._accept.hide()
                 self._reject.hide()
+                self._close.hide()
                 self.iban.enabled = False
 
-            elif obj.status=='submitted':
+            elif obj.status == 'submitted':
+
+                self.bank_transfer_date.hide()
                 self._previous.show()
                 self._submit.hide()
                 self._print.hide()
@@ -163,8 +196,11 @@ class RequestReimbursementForm(ModelFormWidget):
                 self._submit2approve.hide()
                 self._accept.show()
                 self._reject.show()
+                self._close.hide()
                 self.iban.enabled = False
+
             elif obj.status in ['rejected', 'approved']:
+
                 self._previous.hide()
                 self._submit.hide()
                 self._print.hide()
@@ -173,9 +209,45 @@ class RequestReimbursementForm(ModelFormWidget):
                 self._accept.hide()
                 self._reject.hide()
                 self.iban.enabled = False
+
+                if obj.status == 'approved':
+                    self.bank_transfer_date.show()
+                    self._close.show()
+                else:
+                    self.bank_transfer_date.hide()
+                    self._close.hide()
+
+            elif obj.status == 'closed':
+
+                self.bank_transfer_date.show()
+                self.bank_transfer_date.readonly = True
+                self._previous.hide()
+                self._submit.hide()
+                self._print.hide()
+                self._printed.hide()
+                self._submit2approve.hide()
+                self._accept.hide()
+                self._reject.hide()
+                self._close.hide()
+                self.iban.enabled = False
+
         else:
+
+            self.bank_transfer_date.hide()
+            self._submit.hide()
+            self._previous.hide()
             self._print.hide()
+            self._printed.hide()
+            self._submit2approve.hide()
+            self._accept.hide()
+            self._reject.hide()
+            self._close.hide()
             self.iban.enabled = True
+
+        if obj.status == 'closed':
+            self.bank_transfer_date.show()
+            self.bank_transfer_date.readonly = True
+
 
 
     def save_btn_event(self):
@@ -183,56 +255,78 @@ class RequestReimbursementForm(ModelFormWidget):
         self.update_fields_visibility()
 
     def __previous_status_evt(self):
+        if not self.has_update_permissions():
+            raise Exception('No permission')
+
         obj = self.model_object
-        if obj.status=='pending':
-            obj.status='draft'
+        obj.previous_status()
 
-        elif obj.status=='printed':
-            obj.status='pending'
-
-        elif obj.status=='submitted':
-            obj.status='printed'
-
-        obj.save()
-        self.update_fields_visibility()
         self.show_edit_form(self.object_pk)
+        self.update_fields_visibility()
 
     def __set_printed_evt(self):
+        if not self.has_update_permissions():
+            raise Exception('No permission')
+
         obj = self.model_object
-        obj.status = 'printed'
-        obj.save()
-        self.update_fields_visibility()
+        obj.set_printed()
+
         self.show_edit_form(self.object_pk)
+        self.update_fields_visibility()
 
     def __submit_2_pending_evt(self):
         """
         Notify the users with approval responsibility about the new reimbursement
         """
+        if not self.has_update_permissions():
+            raise Exception('No permission')
+
         obj = self.model_object
-        obj.submit()
-        self.update_fields_visibility()
+        obj.submit_to_pending()
+
         self.show_edit_form(self.object_pk)
+        self.update_fields_visibility()
 
     def __submit_2_approve_evt(self):
+        if not self.has_update_permissions():
+            raise Exception('No permission')
+
         obj = self.model_object
-        obj.status = 'submitted'
-        obj.save()
-        self.update_fields_visibility()
+        obj.submit_for_approval()
+
         self.show_edit_form(self.object_pk)
+        self.update_fields_visibility()
 
     def __accept_evt(self):
+        if not self.has_update_permissions():
+            raise Exception('No permission')
+
         obj = self.model_object
-        obj.status = 'approved'
-        obj.save()
-        self.update_fields_visibility()
+        obj.accept()
+
         self.show_edit_form(self.object_pk)
+        self.update_fields_visibility()
 
     def __reject_evt(self):
+        if not self.has_update_permissions():
+            raise Exception('No permission')
+
         obj = self.model_object
-        obj.status = 'rejected'
-        obj.save()
-        self.update_fields_visibility()
+        obj.reject()
+
         self.show_edit_form(self.object_pk)
+        self.update_fields_visibility()
+
+    def __set_closed_evt(self):
+        if not self.has_update_permissions():
+            raise Exception('No permission')
+
+        obj = self.model_object
+        obj.bank_transfer_date = self.bank_transfer_date.value
+        obj.set_closed() # this function will save the object
+
+        self.show_edit_form(self.object_pk)
+        self.update_fields_visibility()
 
 
     def get_readonly(self, default):

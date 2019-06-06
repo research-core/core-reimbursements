@@ -73,15 +73,20 @@
     }
 
     #expenses .doc-number {
-        width: 10%;
+        width: 5%;
     }
 
     #expenses .req-number {
-        width: 15%;
+        width: 10%;
+    }
+
+    #expenses .expense-code {
+        width: 25%;
     }
 
     #expenses .description {
-        width: 55%;
+        width: 40%;
+        text-align: center;
     }
 
     #expenses .money {
@@ -148,14 +153,6 @@
                     <th>Nome / Name</th>
                     <td>{{ reimbursement.requester_name }}</td>
                 </tr>
-                <tr>
-                    <th>CR / Responsability Center</th>
-                    <td>{{ reimbursement.project.costcenter.costcenter_code }}</td>
-                </tr>
-                <tr>
-                    <th>Projecto / Project</th>
-                    <td>{{ reimbursement.project.financeproject_code }}</td>
-                </tr>
             </table>
         </section>
         <div id="section-break"></div>
@@ -163,12 +160,14 @@
             <table>
                 <col class="doc-number">
                 <col class="req-number">
+                <col class="expense-code">
                 <col class="description">
                 <col class="money">
                 <thead>
                     <tr>
-                        <th>Nº DOC / DOC Nr</th>
-                        <th>REQUISIÇÃO / REQUISITION</th>
+                        <th>DOC.</th>
+                        <th>REQ.</th>
+                        <th>COD. DESP. / EXP. CODE</th>
                         <th>DESCRIÇÃO / DESCRIPTION</th>
                         <th>VALOR / VALUE</th>
                     </tr>
@@ -178,6 +177,7 @@
                     <tr>
                         <td>{{ expense.document_number|default_if_none:"" }}</td>
                         <td>{{ expense.requisition_number|default_if_none:"" }}</td>
+                        <td>{{ expense.expensecode|default_if_none:"" }}</td>
                         <td>{{ expense.description|linebreaksbr }}</td>
                         <td class="money">{{ expense.value }}</td>
                     </tr>

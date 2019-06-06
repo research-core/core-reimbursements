@@ -24,9 +24,11 @@ class Reimbursement(StatusModel, TimeStampedModel):
     )
 
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    person = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE, blank=True, null=True)
+    person = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE)
     iban = IBANField(verbose_name="IBAN", blank=True, include_countries=("PT",))
     order = models.ForeignKey('supplier.Order', on_delete=models.CASCADE, null=True, blank=True)
+
+    bank_transfer_date = models.DateField('Transfer date', null=True, blank=True)
 
     objects = ReimbursementQuerySet.as_manager()
 
@@ -47,11 +49,8 @@ class Reimbursement(StatusModel, TimeStampedModel):
         if self.created_by is None:
             raise ValidationError("This proposal has no person responsible")
 
-    # Custom methods
-    # =========================================================================
-
     def has_approve_permissions(self, user):
-        if self.pk is None or self.status=='draft':
+        if self.pk is None or self.status == 'draft':
             return False
 
         perms = Permissions.objects.filter_by_auth_permissions(
@@ -65,48 +64,18 @@ class Reimbursement(StatusModel, TimeStampedModel):
         # get all django groups associated to the expenses
         exp_djangogroups = [e.expensecode.financeproject.costcenter.group for e in self.expenses.all()]
         # get all the research groups associated to the expenses
-        exp_researchgrps = [g.group_django.first() for g in exp_djangogroups if g.group_django.first() is not None]
+        exp_researchgrps = [g.group_django.first() for g in exp_djangogroups if
+                            g.group_django.first() is not None]
 
         # check if the user has permissions to all the expense codes research groups
         perms = perms.filter(researchgroup__in=exp_researchgrps).distinct()
-        has_access = perms.count()>0
+        has_access = perms.count() > 0
         for p in perms:
             if user not in p.djangogroup.user_set.all():
                 has_access = False
                 break
 
         return has_access
-
-    def submit(self):
-        if self.expenses.count() <= 0:
-            raise Exception("Add at least one Expense to be reimbursed.")
-
-        self.status = 'pending'
-        self.save()
-
-        perms = Permissions.objects.filter_by_auth_permissions(
-            Reimbursement, ['can_approve_reimbursements']
-        )
-
-        exp_djangogroups = [e.expensecode.financeproject.costcenter.group for e in self.expenses.all()]
-        exp_researchgrps = [g.group_django.first() for g in exp_djangogroups if g.group_django.first() is not None]
-        sent_to_groups   = [p.djangogroup for p in perms if p.researchgroup is None or p.researchgroup in exp_researchgrps]
-
-        users = set()
-        for g in sent_to_groups:
-            for u in g.user_set.all():
-                users.add(u)
-
-        for user in users:
-            notify(
-                'NEW_REIMBURSEMENT_REQUEST',
-                '{} submitted a new reimbursement request'.format(self.person),
-                '{} submitted a new reimbursement request'.format(self.person),
-                user,
-                visible=True,
-                label='New reimbursement request',
-                period='D'
-            )
 
     @property
     def requester_name(self):
@@ -171,3 +140,125 @@ class Reimbursement(StatusModel, TimeStampedModel):
         return WeasyTemplateView.as_view(template_name=template, extra_context=context)(
             request
         )
+
+    def get_users_with_permissions(self, permission_code):
+        perms = Permissions.objects.filter_by_auth_permissions(
+            Reimbursement, [permission_code]
+        )
+
+        exp_djangogroups = [e.expensecode.financeproject.costcenter.group for e in self.expenses.all()]
+        exp_researchgrps = [g.group_django.first() for g in exp_djangogroups if g.group_django.first() is not None]
+        sent_to_groups = [p.djangogroup for p in perms if
+                          p.researchgroup is None or p.researchgroup in exp_researchgrps]
+        users = set()
+        for g in sent_to_groups:
+            for u in g.user_set.all():
+                users.add(u)
+
+        return users
+
+    # =========================================================================
+    # FUNCTIONS TO CONTROL THE STATUS #########################################
+    # =========================================================================
+
+    def previous_status(self):
+
+        if self.status=='pending':
+            self.status='draft'
+
+        elif self.status=='printed':
+            self.status='pending'
+
+        elif self.status=='submitted':
+            self.status='printed'
+
+        self.save()
+
+
+
+    def submit_to_pending(self):
+        if self.expenses.count() <= 0:
+            raise Exception("Add at least one Expense to be reimbursed.")
+
+        self.status = 'pending'
+        self.save()
+
+        for user in self.get_users_with_permissions('can_approve_reimbursements'):
+
+            notify(
+                'NEW_REIMBURSEMENT_REQUEST',
+                '{} submitted a new reimbursement request'.format(self.person),
+                '{} submitted a new reimbursement request'.format(self.person),
+                user,
+                visible=True,
+                label='New reimbursement request',
+                period='D'
+            )
+
+
+    def set_printed(self):
+        self.status = 'printed'
+        self.save()
+
+    def submit_for_approval(self):
+        self.status = 'submitted'
+        self.save()
+
+        for user in self.get_users_with_permissions('can_approve_reimbursements'):
+
+            notify(
+                'REIMBURSEMENT_APPROVAL_REQUEST',
+                'The reimbursement from the user {} requires our approval'.format(self.person),
+                'The reimbursement from the user {} requires our approval'.format(self.person),
+                user,
+                visible=True,
+                label='Reimbursement approval request',
+                period='D'
+            )
+
+
+    def accept(self):
+        self.status = 'approved'
+        self.save()
+
+        # Notify the users that a new reimbursement was approved.
+        for user in self.get_users_with_permissions('receive_approved_notifications'):
+            notify(
+                'ONE_REIMBURSEMENT_WAS_APPROVED',
+                'A new reimbursement for the user {} was approved'.format(self.person),
+                'A new reimbursement for the user {} was approved'.format(self.person),
+                user,
+                visible=True,
+                label='Approved reimbursement notification',
+                period='D'
+            )
+
+        notify(
+            'YOUR_REIMBURSEMENT_WAS_APPROVED',
+            'Your reimbursement was approved',
+            'Your reimbursement was approved',
+            self.person.djangouser,
+            visible=True,
+            label='Notification about your reimbursement approval',
+            period='D'
+        )
+
+    def reject(self):
+        self.status = 'rejected'
+        self.save()
+
+        notify(
+            'YOUR_REIMBURSEMENT_WAS_REJECTED',
+            'Your reimbursement was rejected',
+            'Your reimbursement was rejected',
+            self.person.djangouser,
+            visible=True,
+            label='Notification about your reimbursement rejection',
+            period='I'
+        )
+
+    def set_closed(self):
+        self.status = 'closed'
+        self.save()
+
+
