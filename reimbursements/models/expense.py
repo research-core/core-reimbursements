@@ -40,6 +40,8 @@ class Expense(models.Model):
 
     class Meta:
         ordering = ('document_number',)
+        verbose_name = 'Reimbursement expense'
+        verbose_name_plural = 'Reimbursements expenses'
 
     def clean(self):
 
