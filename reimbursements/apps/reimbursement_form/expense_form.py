@@ -1,7 +1,7 @@
 from pyforms_web.web.middleware import PyFormsMiddleware
 from reimbursements.models import Expense
 from pyforms.controls import ControlAutoComplete
-from supplier.models import FinanceProject, FinanceCostCenter, ExpenseCode
+from finance.models import Project, CostCenter, ExpenseCode
 from confapp import conf
 from model_extra_fields.widgets.custom_model_form import CustomModelForm
 
@@ -53,13 +53,13 @@ class ExpenseForm(CustomModelForm):
 
         self._costcenter = ControlAutoComplete(
             'Cost center',
-            queryset=FinanceCostCenter.objects.active().by_person(person),
+            queryset=CostCenter.objects.active().by_person(person),
             changed_event=self.load_finance_projects,
             default=obj.expensecode.financeproject.costcenter.pk if obj and obj.expensecode else None
         )
         self._financeprj = ControlAutoComplete(
             'Finance project',
-            queryset=FinanceProject.objects.all(),
+            queryset=Project.objects.all(),
             enabled=False,
             changed_event=self.load_expense_codes,
             default=obj.expensecode.financeproject.pk if obj and obj.expensecode else None
@@ -75,7 +75,7 @@ class ExpenseForm(CustomModelForm):
 
 
     def load_finance_projects(self):
-        self._financeprj.queryset = FinanceProject.objects.filter(costcenter=self._costcenter.value)
+        self._financeprj.queryset = Project.objects.filter(costcenter=self._costcenter.value)
         self._financeprj.value = None
         self._financeprj.enabled = True
         self.expensecode.enabled = False

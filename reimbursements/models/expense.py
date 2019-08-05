@@ -34,7 +34,7 @@ class Expense(models.Model):
     receipt       = models.FileField('Receipt', upload_to=user_directory_path)
     receipt_date  = models.DateField('Receipt date', null=True, default=None)
     reimbursement = models.ForeignKey(to="Reimbursement", on_delete=models.CASCADE, related_name="expenses")
-    expensecode   = models.ForeignKey(to='supplier.ExpenseCode', on_delete=models.CASCADE, related_name="reimbursement_expenses",
+    expensecode   = models.ForeignKey(to='finance.ExpenseCode', on_delete=models.CASCADE, related_name="reimbursement_expenses",
                                            verbose_name='Expense code')
 
 

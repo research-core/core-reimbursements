@@ -1,4 +1,4 @@
-from common.models import Permissions
+from permissions.models import Permission
 from django.db import models
 from model_utils import Choices
 from django.conf import settings
@@ -24,9 +24,9 @@ class Reimbursement(StatusModel, TimeStampedModel):
     )
 
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    person = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE)
+    person = models.ForeignKey(to="people.Person", on_delete=models.CASCADE)
     iban = IBANField(verbose_name="IBAN", blank=True, include_countries=("PT",))
-    order = models.ForeignKey('supplier.Order', on_delete=models.CASCADE, null=True, blank=True)
+    order = models.ForeignKey('orders.Order', on_delete=models.CASCADE, null=True, blank=True)
 
     bank_transfer_date = models.DateField('Transfer date', null=True, blank=True)
 

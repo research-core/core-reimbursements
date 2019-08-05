@@ -1,8 +1,8 @@
 from django.db import models
 from django.db.models import Q
-from common.models import Permissions
-from research.models import Group as ResearchGroup
-from supplier.models import ExpenseCode
+from permissions.models import Permission
+from people.models import Group as ResearchGroup
+from finance.models import ExpenseCode
 
 class ReimbursementQuerySet(models.QuerySet):
     pass
