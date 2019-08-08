@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from djmoney.models.validators import MinMoneyValidator
 
 def user_directory_path(instance, filename):
-    return os.path.join('reimbursements', 'expense', instance.reimbursement.person.djangouser.username, filename)
+    return os.path.join('reimbursements', 'expense', instance.reimbursement.person.auth_user.username, filename)
 
 class Expense(models.Model):
     """Expense to be reimbursed."""

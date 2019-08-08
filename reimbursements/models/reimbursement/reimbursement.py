@@ -53,7 +53,7 @@ class Reimbursement(StatusModel, TimeStampedModel):
         if self.pk is None or self.status == 'draft':
             return False
 
-        perms = Permissions.objects.filter_by_auth_permissions(
+        perms = Permission.objects.filter_by_auth_permissions(
             Reimbursement, ['can_approve_reimbursements']
         )
 
@@ -142,7 +142,7 @@ class Reimbursement(StatusModel, TimeStampedModel):
         )
 
     def get_users_with_permissions(self, permission_code):
-        perms = Permissions.objects.filter_by_auth_permissions(
+        perms = Permission.objects.filter_by_auth_permissions(
             Reimbursement, [permission_code]
         )
 
@@ -237,7 +237,7 @@ class Reimbursement(StatusModel, TimeStampedModel):
             'YOUR_REIMBURSEMENT_WAS_APPROVED',
             'Your reimbursement was approved',
             'Your reimbursement was approved',
-            self.person.djangouser,
+            self.person.auth_user,
             visible=True,
             label='Notification about your reimbursement approval',
             period='D'
@@ -251,7 +251,7 @@ class Reimbursement(StatusModel, TimeStampedModel):
             'YOUR_REIMBURSEMENT_WAS_REJECTED',
             'Your reimbursement was rejected',
             'Your reimbursement was rejected',
-            self.person.djangouser,
+            self.person.auth_user,
             visible=True,
             label='Notification about your reimbursement rejection',
             period='I'

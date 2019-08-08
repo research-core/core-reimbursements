@@ -16,7 +16,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
         This is by default what everyone sees if they have no permissions.
         """
-        return self.filter( Q(created_by=user) | Q(person__djangouser=user) ).distinct()
+        return self.filter( Q(created_by=user) | Q(person__auth_user=user) ).distinct()
 
     def managed_by(self, user, required_codenames, default=None):
         """
@@ -31,7 +31,7 @@ class ReimbursementQuerySet(models.QuerySet):
         if user.is_superuser:
             return self
 
-        ranked_permissions = Permissions.objects.filter_by_user_and_auth_permissions(
+        ranked_permissions = Permission.objects.filter_by_user_and_auth_permissions(
             user, self.model, required_codenames)
 
         if ranked_permissions.exists():
@@ -50,7 +50,7 @@ class ReimbursementQuerySet(models.QuerySet):
                 return self.filter(
                     Q(expenses__expensecode__in=expenses_with_access) |
                     Q(created_by=user) |
-                    Q(person__djangouser=user)
+                    Q(person__auth_user=user)
                 )
 
         return default.distinct()
@@ -81,7 +81,7 @@ class ReimbursementQuerySet(models.QuerySet):
         if self.filter(
                 Q(status="draft") &
                 (
-                    Q(created_by=user) | Q(person__djangouser=user)
+                    Q(created_by=user) | Q(person__auth_user=user)
                 )
             ).exists():
             return True
@@ -101,7 +101,7 @@ class ReimbursementQuerySet(models.QuerySet):
         Only reimbursements in draft or pending can be removed.
         """
         return self.filter(
-            Q(status__in=["draft", "pending"]) & ( Q(created_by=user) | Q(person__djangouser=user) )
+            Q(status__in=["draft", "pending"]) & ( Q(created_by=user) | Q(person__auth_user=user) )
         )
 
 
