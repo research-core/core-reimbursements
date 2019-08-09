@@ -12,7 +12,7 @@ setup(
     ],
     author_email=[
         'hugo.cachitas@research.fchampalimaud.org',
-        'ricardo.ribeiro@research.fchampalimaud.org',
+        'ricardojvr@gmail.com',
     ],
     packages=find_packages(),
     include_package_data=True,
