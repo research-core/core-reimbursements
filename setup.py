@@ -1,14 +1,23 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import re
 from setuptools import setup, find_packages
+
+version, license = None, None
+with open('reimbursements/__init__.py', 'r') as fd:
+    content = fd.read()
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', content, re.MULTILINE).group(1)
+    license = re.search(r'^__license__\s*=\s*[\'"]([^\'"]*)[\'"]', content, re.MULTILINE).group(1)
+if not version: raise RuntimeError('Cannot find version information')
+if not license: raise RuntimeError('Cannot find license information')
 
 with open('README.md', 'r') as fd:
     long_description = fd.read()
 
 setup(
     name='core-reimbursements',
-    version='0.0',
+    version=version,
     description='Research CORE ERM - reimbursements module',
     author='Ricardo Ribeiro, Hugo Cachitas',
     author_email='ricardojvr@gmail.com, hugo.cachitas@research.fchampalimaud.org',
@@ -16,5 +25,5 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     packages=find_packages(),
-    license='CC BY-NC 2.0',
+    license=license,
 )
