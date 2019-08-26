@@ -58,20 +58,20 @@ class Reimbursement(StatusModel, TimeStampedModel):
         )
 
         for p in perms:
-            if p.researchgroup is None and user in p.djangogroup.user_set.all():
+            if p.researchgroup is None and user in p.auth_group.user_set.all():
                 return True
 
         # get all django groups associated to the expenses
-        exp_djangogroups = [e.expensecode.financeproject.costcenter.group for e in self.expenses.all()]
+        exp_auth_groups = [e.expensecode.project.costcenter.group for e in self.expenses.all()]
         # get all the research groups associated to the expenses
-        exp_researchgrps = [g.group_django.first() for g in exp_djangogroups if
+        exp_researchgrps = [g.group_django.first() for g in exp_auth_groups if
                             g.group_django.first() is not None]
 
         # check if the user has permissions to all the expense codes research groups
         perms = perms.filter(researchgroup__in=exp_researchgrps).distinct()
         has_access = perms.count() > 0
         for p in perms:
-            if user not in p.djangogroup.user_set.all():
+            if user not in p.auth_group.user_set.all():
                 has_access = False
                 break
 
@@ -146,9 +146,9 @@ class Reimbursement(StatusModel, TimeStampedModel):
             Reimbursement, [permission_code]
         )
 
-        exp_djangogroups = [e.expensecode.financeproject.costcenter.group for e in self.expenses.all()]
-        exp_researchgrps = [g.group_django.first() for g in exp_djangogroups if g.group_django.first() is not None]
-        sent_to_groups = [p.djangogroup for p in perms if
+        exp_auth_groups = [e.expensecode.project.costcenter.group for e in self.expenses.all()]
+        exp_researchgrps = [g.group_django.first() for g in exp_auth_groups if g.group_django.first() is not None]
+        sent_to_groups = [p.auth_group for p in perms if
                           p.researchgroup is None or p.researchgroup in exp_researchgrps]
         users = set()
         for g in sent_to_groups:

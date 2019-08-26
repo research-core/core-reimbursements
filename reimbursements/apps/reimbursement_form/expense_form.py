@@ -55,14 +55,14 @@ class ExpenseForm(CustomModelForm):
             'Cost center',
             queryset=CostCenter.objects.active().by_person(person),
             changed_event=self.load_finance_projects,
-            default=obj.expensecode.financeproject.costcenter.pk if obj and obj.expensecode else None
+            default=obj.expensecode.project.costcenter.pk if obj and obj.expensecode else None
         )
         self._financeprj = ControlAutoComplete(
             'Finance project',
             queryset=Project.objects.all(),
             enabled=False,
             changed_event=self.load_expense_codes,
-            default=obj.expensecode.financeproject.pk if obj and obj.expensecode else None
+            default=obj.expensecode.project.pk if obj and obj.expensecode else None
         )
 
         if obj and obj.expensecode:
@@ -81,7 +81,7 @@ class ExpenseForm(CustomModelForm):
         self.expensecode.enabled = False
 
     def load_expense_codes(self):
-        self.expensecode.queryset = ExpenseCode.objects.filter(financeproject=self._financeprj.value)
+        self.expensecode.queryset = ExpenseCode.objects.filter(project=self._financeprj.value)
         self.expensecode.value = None
         self.expensecode.enabled = True
 

@@ -41,9 +41,9 @@ class ReimbursementQuerySet(models.QuerySet):
             else:
                 # check which expense codes the user has permissions to
                 researchgroups = [p.researchgroup for p in ranked_permissions]
-                djangogroups   = [g.groupdjango for g in researchgroups]
+                auth_groups   = [g.groupdjango for g in researchgroups]
                 expenses_with_access = ExpenseCode.objects.filter(
-                    financeproject__costcenter__group__in=djangogroups
+                    project__costcenter__group__in=auth_groups
                 )
 
                 # The owner of the reimbursements or the manager of the expense codes can access
