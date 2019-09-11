@@ -5,6 +5,8 @@ from djmoney.money import Money
 from djmoney.models.fields import MoneyField
 from django.core.exceptions import ValidationError
 from djmoney.models.validators import MinMoneyValidator
+from reimbursements.models.expense.expense_queryset import ExpenseQuerySet
+
 
 def user_directory_path(instance, filename):
     return os.path.join('reimbursements', 'expense', instance.reimbursement.person.djangouser.username, filename)
@@ -37,6 +39,7 @@ class Expense(models.Model):
     expensecode   = models.ForeignKey(to='supplier.ExpenseCode', on_delete=models.CASCADE, related_name="reimbursement_expenses",
                                            verbose_name='Expense code')
 
+    objects = ExpenseQuerySet.as_manager()
 
     class Meta:
         ordering = ('document_number',)

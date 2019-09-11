@@ -1,2 +1,2 @@
 from .reimbursement.reimbursement import Reimbursement
-from .expense import Expense
+from .expense.expense import Expense

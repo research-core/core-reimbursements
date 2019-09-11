@@ -48,8 +48,7 @@ class ExpenseForm(CustomModelForm):
         super().create_model_formfields()
 
         obj  = self.model_object
-        user  = PyFormsMiddleware.user()
-        person = user.person_user.first()
+        person = self.parent_object.person
 
         self._costcenter = ControlAutoComplete(
             'Cost center',
@@ -67,10 +66,6 @@ class ExpenseForm(CustomModelForm):
 
         if obj and obj.expensecode:
             self.load_expense_codes()
-
-        if person is None:
-            self.warning('Sorry you require a person associated to your user.')
-            return
 
 
 

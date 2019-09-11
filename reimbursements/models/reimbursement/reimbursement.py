@@ -35,6 +35,7 @@ class Reimbursement(StatusModel, TimeStampedModel):
     class Meta:
         ordering = ("-created",)
         permissions = (
+            ("create_reimbursements_on_behalf_others", "Create new reimbursements on behalf name of others"),
             ("manage_reimbursements", "Submit reimbursements for approval"),
             ("can_approve_reimbursements", "Approve or reject reimbursements"),
             ("receive_approved_notifications", "Receive notifications about the approved reimbursements"),

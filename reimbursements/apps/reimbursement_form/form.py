@@ -1,6 +1,10 @@
 # from django.conf import settings
 # from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from common.models import Permissions
 from confapp import conf
+from django.db.models import Q
 from django.urls import reverse
 from pyforms.controls import ControlButton
 from reimbursements.models import Reimbursement
@@ -108,23 +112,61 @@ class RequestReimbursementForm(ModelFormWidget):
 
         super().__init__(*args, **kwargs)
 
-        self.person.enabled = False
+        # Check if the user has permissions to create a reimbursement on behalf of other people
+        user = PyFormsMiddleware.user()
+        self.person.enabled = Permissions.objects.filter_by_user_and_auth_permissions(
+            user, Reimbursement, ['create_reimbursements_on_behalf_others']
+        ).exists()
 
+        # Select the person automatically
         if self.model_object is None:
-
-            user   = PyFormsMiddleware.user()
             person = user.person_user.first()
 
             if person is not None:
                 self.person.value = person.pk
                 self.iban.value = person.privateinfo.iban
-            else:
+
+            elif not self.person.enabled:
                 self.warning(
                     'You need a Person profile associated to your account to be able to create reimbursements.'
                 )
 
         self.update_fields_visibility()
 
+    def autocomplete_search(self, queryset, keyword, control):
+        queryset = super().autocomplete_search(queryset, keyword, control)
+
+        if control.name=='person':
+            user = PyFormsMiddleware.user()
+
+            ranked_permissions = Permissions.objects.filter_by_user_and_auth_permissions(
+                user, Reimbursement, ['create_reimbursements_on_behalf_others']
+            )
+
+            if ranked_permissions.exists():
+                # check if the user has permissions to all registers
+                if ranked_permissions.filter(researchgroup=None).exists():
+                    return queryset
+                else:
+                    # check which people the user has permissions to
+                    researchgroups = [p.researchgroup for p in ranked_permissions]
+
+                    # The owner of the reimbursements or the manager of the expense codes can access
+                    now = timezone.now()
+
+                    return queryset.filter(
+                        Q(djangouser=user) | (
+                            Q(groupmember__group__in=researchgroups) &
+                            (
+                                Q(groupmember__date_joined__lte=now) | Q(groupmember__date_joined=None)
+                            ) &
+                            (
+                                Q(groupmember__date_left__gte=now) | Q(groupmember__date_left=None)
+                            )
+                        )
+                    )
+
+        return queryset.filter(pk=0)
 
     def update_fields_visibility(self):
         obj = self.model_object
@@ -135,15 +177,12 @@ class RequestReimbursementForm(ModelFormWidget):
             )
             self._print.show()
         else:
+            # show print button only when the reimbursement is pending
             self._print.hide()
 
         # show submit button only when is draft
         if obj is None or obj.status != 'draft':
             self._submit.hide()
-
-        # show print button only when the reimbursement is pending
-        if obj is None:
-            self._print.hide()
 
         if obj and self.has_update_permissions():
 
@@ -244,9 +283,7 @@ class RequestReimbursementForm(ModelFormWidget):
             self._close.hide()
             self.iban.enabled = True
 
-        if obj.status == 'closed':
-            self.bank_transfer_date.show()
-            self.bank_transfer_date.readonly = True
+
 
 
 

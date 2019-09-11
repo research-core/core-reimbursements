@@ -18,13 +18,27 @@ class ExpenseInline(ModelAdminWidget):
 
 
     def has_add_permissions(self):
-        obj = self.parent_model.objects.get(pk=self.parent_pk)
-        return obj.status in ['draft', 'pending']
+        res = super().has_add_permissions()
+        if res:
+            obj = self.parent_model.objects.get(pk=self.parent_pk)
+            return obj.status in ['draft', 'pending']
+        else:
+            return res
+
 
     def has_update_permissions(self, obj):
-        obj = obj.reimbursement
-        return obj.status in ['draft', 'pending']
+        res = super().has_update_permissions(obj)
+        if res:
+            obj = obj.reimbursement
+            return obj.status in ['draft', 'pending']
+        else:
+            return res
+
 
     def has_remove_permissions(self, obj):
-        obj = obj.reimbursement
-        return obj.status in ['draft', 'pending']
+        res = super().has_remove_permissions(obj)
+        if res:
+            obj = obj.reimbursement
+            return obj.status in ['draft', 'pending']
+        else:
+            return res

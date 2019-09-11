@@ -1,9 +1,10 @@
 from django.db import models
 from django.db.models import Q
 from common.models import Permissions
+from reimbursements.models import Reimbursement
 from supplier.models import ExpenseCode
 
-class ReimbursementQuerySet(models.QuerySet):
+class ExpenseQuerySet(models.QuerySet):
     # User dependent Querysets
     # =========================================================================
 
@@ -14,7 +15,7 @@ class ReimbursementQuerySet(models.QuerySet):
 
         This is by default what everyone sees if they have no permissions.
         """
-        return self.filter( Q(created_by=user) | Q(person__djangouser=user) ).distinct()
+        return self.filter( Q(reimbursement__created_by=user) | Q(reimbursement__person__djangouser=user) ).distinct()
 
     def managed_by(self, user, required_codenames, default=None):
         """
@@ -30,7 +31,7 @@ class ReimbursementQuerySet(models.QuerySet):
             return self
 
         ranked_permissions = Permissions.objects.filter_by_user_and_auth_permissions(
-            user, self.model, required_codenames)
+            user, Reimbursement, required_codenames)
 
         if ranked_permissions.exists():
             # check if the user has permissions to all registers
@@ -41,14 +42,14 @@ class ReimbursementQuerySet(models.QuerySet):
                 researchgroups = [p.researchgroup for p in ranked_permissions]
                 djangogroups   = [g.groupdjango for g in researchgroups]
                 expenses_with_access = ExpenseCode.objects.filter(
-                    financeproject__costcenter__group__in=djangogroups
+                    reimbursement__financeproject__costcenter__group__in=djangogroups
                 )
 
                 # The owner of the reimbursements or the manager of the expense codes can access
                 return self.filter(
-                    Q(expenses__expensecode__in=expenses_with_access) |
-                    Q(created_by=user) |
-                    Q(person__djangouser=user)
+                    Q(expensecode__in=expenses_with_access) |
+                    Q(reimbursement__created_by=user) |
+                    Q(reimbursement__person__djangouser=user)
                 )
 
         return default.distinct()
@@ -65,7 +66,7 @@ class ReimbursementQuerySet(models.QuerySet):
         )
 
     def has_add_permissions(self, user):
-        return True
+        return self.has_update_permissions(user)
 
     def has_view_permissions(self, user):
         # view_permission is useless because we let people see
@@ -76,19 +77,19 @@ class ReimbursementQuerySet(models.QuerySet):
 
         # it was created or belongs to the user.
         if self.filter(
-                Q(status="draft") &
+                Q(reimbursement__status="draft") &
                 (
-                    Q(created_by=user) | Q(person__djangouser=user)
+                    Q(reimbursement__created_by=user) | Q(reimbursement__person__djangouser=user)
                 )
             ).exists():
             return True
 
         if self.filter(
-                status__in=['draft', 'pending', 'printed', 'approved', 'rejected']
+                reimbursement__status__in=['draft', 'pending', 'printed', 'approved', 'rejected']
             ).managed_by( user, ['manage_reimbursements'] ).exists():
             return True
 
-        if self.filter( status__in=['submitted'] ).managed_by( user, ['can_approve_reimbursements'] ).exists():
+        if self.filter( reimbursement__status__in=['submitted'] ).managed_by( user, ['can_approve_reimbursements'] ).exists():
             return True
 
         return False
@@ -98,7 +99,7 @@ class ReimbursementQuerySet(models.QuerySet):
         Only reimbursements in draft or pending can be removed.
         """
         return self.filter(
-            Q(status__in=["draft", "pending"]) & ( Q(created_by=user) | Q(person__djangouser=user) )
+            Q(reimbursement__status__in=["draft", "pending"]) & ( Q(reimbursement__created_by=user) | Q(reimbursement__person__djangouser=user) )
         )
 
 

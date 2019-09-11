@@ -18,10 +18,11 @@ class ReimbursementsApp(ModelAdminWidget):
     USE_DETAILS_TO_EDIT = False
 
     LIST_DISPLAY = [
-        "created_by",
+        'person',
         "get_requisitions_status",
         "total",
         "status",
+        "created_by",
     ]
     LIST_FILTER = ["created", "status"]
     SEARCH_FIELDS = ["person__full_name__icontains", "ext_person_name__icontains"]

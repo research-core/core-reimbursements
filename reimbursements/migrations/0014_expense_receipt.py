@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='expense',
             name='receipt',
-            field=models.FileField(default=None, upload_to=reimbursements.models.expense.user_directory_path, verbose_name='Receipt'),
+            field=models.FileField(default=None, upload_to=reimbursements.models.expense.expense.user_directory_path, verbose_name='Receipt'),
             preserve_default=False,
         ),
     ]
