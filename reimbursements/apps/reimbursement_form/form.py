@@ -1,5 +1,3 @@
-# from django.conf import settings
-# from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from common.models import Permissions
@@ -35,8 +33,9 @@ class RequestReimbursementForm(ModelFormWidget):
         no_columns('_previous', '_submit', "_print", '_printed', '_submit2approve','_reject', '_accept', 'bank_transfer_date', '_close', style="float:right"),
         "h3:Requester Information",
         segment(
-            ("person", "iban")
-        ),
+            ("person", "iban"),
+            'fullname',
+    ),
         "h3:Expenses",
         segment("ExpenseInline"),
         ("created", "modified", "status", "status_changed")
@@ -47,6 +46,7 @@ class RequestReimbursementForm(ModelFormWidget):
     # =========================================================================
 
     def __init__(self, *args, **kwargs):
+
 
         self._previous = ControlButton(
             '<i class="ui icon paper plane outline"></i>Previous status',
@@ -110,7 +110,10 @@ class RequestReimbursementForm(ModelFormWidget):
             default=self.__set_closed_evt
         )
 
+
+
         super().__init__(*args, **kwargs)
+
 
         # Check if the user has permissions to create a reimbursement on behalf of other people
         user = PyFormsMiddleware.user()
@@ -132,6 +135,8 @@ class RequestReimbursementForm(ModelFormWidget):
                 )
 
         self.update_fields_visibility()
+
+
 
     def autocomplete_search(self, queryset, keyword, control):
         queryset = super().autocomplete_search(queryset, keyword, control)

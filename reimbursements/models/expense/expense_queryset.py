@@ -66,7 +66,7 @@ class ExpenseQuerySet(models.QuerySet):
         )
 
     def has_add_permissions(self, user):
-        return self.has_update_permissions(user)
+        return True
 
     def has_view_permissions(self, user):
         # view_permission is useless because we let people see

@@ -24,7 +24,9 @@ class Reimbursement(StatusModel, TimeStampedModel):
     )
 
     created_by = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    person = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE)
+    fullname = models.CharField('Full name', max_length=255, null=True, blank=True,
+                                help_text='Use as alternative, when the person profile does not exists.')
+    person = models.ForeignKey(to="humanresources.Person", on_delete=models.CASCADE, null=True, blank=True)
     iban = IBANField(verbose_name="IBAN", blank=True, include_countries=("PT",))
     order = models.ForeignKey('supplier.Order', on_delete=models.CASCADE, null=True, blank=True)
 
@@ -48,7 +50,12 @@ class Reimbursement(StatusModel, TimeStampedModel):
 
     def clean(self):
         if self.created_by is None:
-            raise ValidationError("This proposal has no person responsible")
+            raise ValidationError({'created_by': ["The responsible field is required"]})
+
+        if self.status in ["printed", "submitted", "approved", "rejected", "closed"] and self.persons in None:
+            raise ValidationError({'person':["The person field is required"]})
+
+
 
     def has_approve_permissions(self, user):
         if self.pk is None or self.status == 'draft':

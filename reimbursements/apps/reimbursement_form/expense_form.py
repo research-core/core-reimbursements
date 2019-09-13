@@ -1,11 +1,13 @@
-from pyforms_web.web.middleware import PyFormsMiddleware
+from pyforms_web.widgets.django import ModelFormWidget
 from reimbursements.models import Expense
 from pyforms.controls import ControlAutoComplete
 from supplier.models import FinanceProject, FinanceCostCenter, ExpenseCode
 from confapp import conf
-from model_extra_fields.widgets.custom_model_form import CustomModelForm
 
-class ExpenseForm(CustomModelForm):
+
+class ExpenseForm(ModelFormWidget):
+
+    TITLE = 'Expense form'
 
     MODEL = Expense
     FIELDSETS = [
@@ -16,8 +18,6 @@ class ExpenseForm(CustomModelForm):
         ' ',
         ('receipt_date', ' ', ' '),
         'receipt',
-        'select_form',
-        'customized_form',
         ' ',
         'description'
     ]
@@ -26,8 +26,6 @@ class ExpenseForm(CustomModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.select_form.label = 'Extra information'
 
         self.value_currency.label = 'Amount currency'
         self.eur_value.changed_event = self.__update_value_evt
