@@ -58,3 +58,10 @@ class ExpenseInline(ModelAdminWidget):
             return obj.status in ['draft', 'pending']
         else:
             return res
+
+    def get_editmodel_class(self, obj):
+
+        if obj.perdiem:
+            return PerDiemForm
+        else:
+            return super().get_editmodel_class(obj)

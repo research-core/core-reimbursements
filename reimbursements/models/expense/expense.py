@@ -33,8 +33,8 @@ class Expense(models.Model):
                          )
 
     is_social     = models.BooleanField('It is a social expense', default=False)
-    receipt       = models.FileField('Receipt', upload_to=user_directory_path)
-    receipt_date  = models.DateField('Receipt date', null=True, default=None)
+    receipt       = models.FileField('Receipt', upload_to=user_directory_path, null=True, blank=True)
+    receipt_date  = models.DateField('Receipt date', null=True, blank=True, default=None)
     reimbursement = models.ForeignKey(to="Reimbursement", on_delete=models.CASCADE, related_name="expenses")
     expensecode   = models.ForeignKey(to='supplier.ExpenseCode', on_delete=models.CASCADE, related_name="reimbursement_expenses",
                                            verbose_name='Expense code')
@@ -48,11 +48,25 @@ class Expense(models.Model):
 
     def clean(self):
 
+        error = {}
+
         if self.description is not None:
             # restrict number of lines
             nlines = self.description.count("\n")
             if nlines > 8 or len(self.description) > 600:
-                raise ValidationError({"description": "Too much text."})
+                error.update({"description": "Too much text."})
+
+        if self.reimbursement.status!='draft':
+
+            if not self.receipt:
+                error.update({'receipt': 'Please fill in the Receipt field.'})
+            if not self.receipt_date:
+                error.update({'receipt_date': 'Please fill in the Receipt date field.'})
+
+        if len(error)>0:
+            raise ValidationError(error)
+
+
 
     def short_description(self):
         return textwrap.shorten(self.description, width=100, placeholder="...")
