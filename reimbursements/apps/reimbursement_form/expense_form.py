@@ -27,8 +27,7 @@ class ExpenseForm(ModelFormWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.value_currency.label = 'Amount currency'
-        self.eur_value.changed_event = self.__update_value_evt
+        self.eur_value.changed_event = self.update_value_evt
 
         if self.object_pk is None:
             self.document_number.value = self.parent.parent.model_object.expenses.count()+1
@@ -36,7 +35,7 @@ class ExpenseForm(ModelFormWidget):
             self._financeprj.enabled = False
 
 
-    def __update_value_evt(self):
+    def update_value_evt(self):
         if self.eur_value.value and self.eur_value.value>0 and self.value.value==0:
             self.value.value = self.eur_value.value
             self.value_currency.value = 'EUR'

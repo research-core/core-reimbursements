@@ -1,6 +1,7 @@
 from pyforms.basewidget import no_columns
+from reimbursements.apps.reimbursement_form.car_expense_form import CarExpenseForm
 from reimbursements.apps.reimbursement_form.per_diem_form import PerDiemForm
-from reimbursements.models import Expense, PerDiem
+from reimbursements.models import Expense, PerDiem, CarExpense
 from pyforms_web.widgets.django import ModelAdminWidget
 from .expense_form import ExpenseForm
 from pyforms.controls import ControlButton
@@ -25,9 +26,22 @@ class ExpenseInline(ModelAdminWidget):
         super().__init__(*args, **kwargs)
 
         self._add_perdiem = ControlButton('<i class="plus icon"></i> Add per diem', default=self.__add_perdiem_evt, label_visible=False, css='tiny basic blue')
+        self._add_carexpense = ControlButton('<i class="plus icon"></i> Add car expense', default=self.__add_carexpense_evt,
+                                          label_visible=False, css='tiny basic blue')
+
 
     def get_toolbar_buttons(self, has_add_permission=False):
-        return no_columns('_add_btn', '_add_perdiem') if has_add_permission else None
+        return no_columns('_add_btn', '_add_perdiem', '_add_carexpense') if has_add_permission else None
+
+    def __add_carexpense_evt(self):
+        params = {
+            'title': 'Create',
+            'model': CarExpense,
+            'parent_model': self.parent_model,
+            'parent_pk': self.parent_pk,
+            'parent_win': self
+        }
+        createform = CarExpenseForm(**params)
 
     def __add_perdiem_evt(self):
         params = {
@@ -61,7 +75,9 @@ class ExpenseInline(ModelAdminWidget):
 
     def get_editmodel_class(self, obj):
 
-        if obj.perdiem:
+        if hasattr(obj, 'perdiem'):
             return PerDiemForm
+        if hasattr(obj, 'carexpense'):
+            return CarExpenseForm
         else:
             return super().get_editmodel_class(obj)

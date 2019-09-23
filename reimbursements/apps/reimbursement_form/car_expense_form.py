@@ -1,11 +1,11 @@
 from pyforms_web.organizers import segment
 
 from .expense_form import ExpenseForm
-from reimbursements.models import PerDiem
+from reimbursements.models import CarExpense
 
-class PerDiemForm(ExpenseForm):
+class CarExpenseForm(ExpenseForm):
 
-    MODEL = PerDiem
+    MODEL = CarExpense
 
     FIELDSETS = [
         ('document_number', "requisition_number"),
@@ -16,23 +16,13 @@ class PerDiemForm(ExpenseForm):
         'h3: Travel information',
         segment(
             'purpose',
-            ('local', 'country', 'n_nights'),
-        ),
-        'h3: Meeting dates',
-        segment(
-            ('start_working', 'end_working'),
-            'prove_working',
-        ),
-        'h3: Trip',
-        segment(
-            ('start_travel', 'end_travel'),
-            'boarding_pass',
+            ('local', 'distance'),
         ),
         'description'
     ]
 
     def __init__(self, *args, **kwargs):
-        ExpenseForm.__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def update_value_evt(self):
         pass
@@ -46,4 +36,4 @@ class PerDiemForm(ExpenseForm):
     @property
     def model_object(self):
         v = ExpenseForm.model_object.fget(self)
-        return v.perdiem if v else v
+        return v.carexpense if v else v

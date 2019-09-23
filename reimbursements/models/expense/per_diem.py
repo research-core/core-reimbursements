@@ -9,10 +9,10 @@ class PerDiem(Expense):
     country  = CountryField()
     n_nights = models.PositiveSmallIntegerField('Number of nights for reimbursement', default=0)
 
-    start_working = models.DateField('Day you start working')
-    end_working   = models.DateField('Day you end working')
+    start_working = models.DateField('First day in the meeting')
+    end_working   = models.DateField('Last day in the meeting')
     prove_working = models.FileField('Certificate of attendance', null=True, blank=True)
 
-    start_travel  = models.DateField('Day your travel started')
-    end_travel    = models.DateField('Day your travel ended')
+    start_travel  = models.DateField('Departure')
+    end_travel    = models.DateField('Arrival')
     boarding_pass = models.FileField('Boarding pass', null=True, blank=True)
